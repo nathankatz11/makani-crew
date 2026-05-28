@@ -280,6 +280,14 @@ export async function getPhotosForDates(dates: string[]) {
     .orderBy(asc(racePhotos.createdAt));
 }
 
+export async function getAllPhotos() {
+  const db = getDb();
+  return db
+    .select()
+    .from(racePhotos)
+    .orderBy(desc(racePhotos.raceDate), asc(racePhotos.createdAt));
+}
+
 export async function uploadRacePhoto(
   raceDate: string,
   uploadedBy: string,

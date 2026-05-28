@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { getAllResults, getCrewList, getPastAvailabilityForDates, getPhotosForDates, getOverridesForDates, getNotesForDates } from "@/lib/actions";
+import { getAllResults, getCrewList, getPastAvailabilityForDates, getPhotosForDates, getOverridesForDates, getNotesForDates, getAllPhotos } from "@/lib/actions";
 import { getPastRaceDates } from "@/lib/dates";
 import { Nav } from "@/components/nav";
 import { ResultsView } from "./results-view";
@@ -24,13 +24,15 @@ export default async function ResultsPage() {
   let results: RaceResult[] = [];
   let pastAvailability: { sailorName: string; raceDate: string; status: string; role: string | null }[] = [];
   let photos: RacePhoto[] = [];
+  let allPhotos: RacePhoto[] = [];
   let overrides: RaceOverride[] = [];
   let notes: RaceNote[] = [];
   try {
-    [results, pastAvailability, photos, overrides, notes] = await Promise.all([
+    [results, pastAvailability, photos, allPhotos, overrides, notes] = await Promise.all([
       getAllResults(),
       getPastAvailabilityForDates(pastDates),
       getPhotosForDates(pastDates),
+      getAllPhotos(),
       getOverridesForDates(pastDates),
       getNotesForDates(pastDates),
     ]);
@@ -100,6 +102,7 @@ export default async function ResultsPage() {
           overridesByDate={overridesByDate}
           notesByDate={notesByDate}
           pastDates={pastDates}
+          allPhotos={allPhotos}
         />
       </main>
 

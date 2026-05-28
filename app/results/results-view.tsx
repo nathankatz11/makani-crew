@@ -1,16 +1,16 @@
 "use client";
 
-import { useState, useTransition, useRef } from "react";
-import { saveResult, uploadRacePhoto, deleteRacePhoto, setAvailability } from "@/lib/actions";
-import { compressImage } from "@/lib/compress-image";
+import { useState, useTransition } from "react";
+import { saveResult, setAvailability } from "@/lib/actions";
 import { formatDateLong } from "@/lib/dates";
 import { RaceNotes } from "@/components/race-notes";
 import { RaceOverrideControl, RaceOverrideBanner } from "@/components/race-override";
+import { PhotoGrid } from "@/components/photo-grid";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Trophy, Camera, X, ChevronDown, ExternalLink, Pencil, Check } from "lucide-react";
+import { Trophy, ChevronDown, ExternalLink, Pencil, Check, Images } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { RaceResult, RacePhoto, RaceOverride, RaceNote } from "@/lib/schema";
 import type { AvailabilityStatus } from "@/lib/schema";
@@ -26,68 +26,6 @@ const STATUS_COLORS: Record<string, string> = {
   maybe: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200 dark:border-amber-800",
   out: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 border-red-200 dark:border-red-800 opacity-60",
 };
-
-function PhotoUploader({ raceDate, sailor, photos }: { raceDate: string; sailor: string; photos: RacePhoto[] }) {
-  const [isPending, startTransition] = useTransition();
-  const [lightbox, setLightbox] = useState<string | null>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
-  const router = useRouter();
-
-  function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    startTransition(async () => {
-      const compressed = await compressImage(file, `${Date.now()}.jpg`);
-      const formData = new FormData();
-      formData.append("file", compressed);
-      await uploadRacePhoto(raceDate, sailor, formData, null);
-      router.refresh();
-      if (fileRef.current) fileRef.current.value = "";
-    });
-  }
-
-  function handleDelete(photoId: number, url: string) {
-    startTransition(async () => {
-      await deleteRacePhoto(photoId, url);
-      router.refresh();
-    });
-  }
-
-  return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <p className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-          <Camera className="h-3.5 w-3.5" /> Photos ({photos.length})
-        </p>
-        <Button variant="ghost" size="sm" className="h-7 text-xs text-muted-foreground" disabled={isPending} onClick={() => fileRef.current?.click()}>
-          {isPending ? "Uploading…" : "+ Add photo"}
-        </Button>
-        <input ref={fileRef} type="file" accept="image/*,image/heic,image/heif" className="hidden" onChange={handleUpload} />
-      </div>
-      {photos.length > 0 && (
-        <div className="grid grid-cols-3 gap-1.5">
-          {photos.map((photo) => (
-            <div key={photo.id} className="relative group aspect-square rounded-md overflow-hidden bg-muted">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={`/api/photo?url=${encodeURIComponent(photo.url)}`} alt="Race photo" className="w-full h-full object-cover cursor-pointer" onClick={() => setLightbox(`/api/photo?url=${encodeURIComponent(photo.url)}`)} />
-              <button onClick={() => handleDelete(photo.id, photo.url)} disabled={isPending} className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                <X className="h-3 w-3" />
-              </button>
-              <p className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-[10px] px-1 py-0.5 truncate opacity-0 group-hover:opacity-100 transition-opacity">{photo.uploadedBy}</p>
-            </div>
-          ))}
-        </div>
-      )}
-      {lightbox && (
-        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4" onClick={() => setLightbox(null)}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={lightbox} alt="Race photo" className="max-w-full max-h-full rounded-lg object-contain" onClick={(e) => e.stopPropagation()} />
-          <button className="absolute top-4 right-4 text-white" onClick={() => setLightbox(null)}><X className="h-6 w-6" /></button>
-        </div>
-      )}
-    </div>
-  );
-}
 
 function PlaceEditor({ raceDate, result }: { raceDate: string; result: RaceResult | undefined }) {
   const [isEditing, setIsEditing] = useState(false);
@@ -136,6 +74,7 @@ export function ResultsView({
   overridesByDate,
   notesByDate,
   pastDates,
+  allPhotos,
 }: {
   results: RaceResult[];
   crew: string[];
@@ -145,8 +84,10 @@ export function ResultsView({
   overridesByDate: Record<string, RaceOverride>;
   notesByDate: Record<string, RaceNote[]>;
   pastDates: string[];
+  allPhotos: RacePhoto[];
 }) {
   const [expandedDate, setExpandedDate] = useState<string | null>(null);
+  const [showAllPhotos, setShowAllPhotos] = useState(false);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
@@ -162,7 +103,6 @@ export function ResultsView({
     });
   }
 
-  // All past dates: union of known race dates + any with availability data
   const allDates = new Set([
     ...pastDates,
     ...results.map((r) => r.raceDate),
@@ -188,6 +128,35 @@ export function ResultsView({
         </Card>
       )}
 
+      {/* All Photos panel */}
+      {allPhotos.length > 0 && (
+        <Button
+          variant="outline"
+          className="w-full"
+          onClick={() => setShowAllPhotos(!showAllPhotos)}
+        >
+          <Images className="h-4 w-4 mr-2" />
+          All Photos ({allPhotos.length})
+          <ChevronDown className={`h-4 w-4 ml-auto transition-transform ${showAllPhotos ? "rotate-180" : ""}`} />
+        </Button>
+      )}
+
+      {showAllPhotos && (
+        <Card>
+          <CardContent className="px-4 py-4">
+            <PhotoGrid
+              photos={allPhotos}
+              sailor={sailor}
+              showUploader
+              showDateLabel
+              showUploadButton={false}
+            />
+          </CardContent>
+        </Card>
+      )}
+
+      <Separator />
+
       {sortedDates.length === 0 && (
         <Card>
           <CardContent className="py-6 text-center text-sm text-muted-foreground">
@@ -199,7 +168,6 @@ export function ResultsView({
 
       {sortedDates.map((date) => {
         const result = results.find((r) => r.raceDate === date);
-        const loggedCrew: string[] = result?.crew ? JSON.parse(result.crew) : [];
         const photos = photosByDate[date] ?? [];
         const notes = notesByDate[date] ?? [];
         const isExpanded = expandedDate === date;
@@ -208,9 +176,9 @@ export function ResultsView({
         const myStatus = (availByDate[date]?.[sailor] ?? "unknown") as AvailabilityStatus;
         const statuses = availByDate[date] ?? {};
 
-        const inNames = loggedCrew.length > 0 ? loggedCrew : crew.filter((n) => statuses[n] === "in");
-        const maybeNames = loggedCrew.length > 0 ? [] : crew.filter((n) => statuses[n] === "maybe");
-        const outNames = loggedCrew.length > 0 ? [] : crew.filter((n) => statuses[n] === "out");
+        const inNames = crew.filter((n) => statuses[n] === "in");
+        const maybeNames = crew.filter((n) => statuses[n] === "maybe");
+        const outNames = crew.filter((n) => statuses[n] === "out");
 
         return (
           <Card key={date} className={isCancelled ? "opacity-70" : ""}>
@@ -223,11 +191,15 @@ export function ResultsView({
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {isCancelled
                     ? `Cancelled${override?.reason ? ` · ${override.reason}` : ""}`
-                    : result?.notes ?? ""}
+                    : ""}
                 </p>
               </div>
               <div className="flex items-center gap-2 shrink-0">
-                {photos.length > 0 && <Camera className="h-3.5 w-3.5 text-muted-foreground" />}
+                {photos.length > 0 && (
+                  <span className="text-xs text-muted-foreground flex items-center gap-0.5">
+                    <Images className="h-3.5 w-3.5" /> {photos.length}
+                  </span>
+                )}
                 {result?.resultsUrl && <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />}
                 {result?.place != null ? (
                   <Badge variant="outline" className={
@@ -252,7 +224,6 @@ export function ResultsView({
                   </div>
                 )}
 
-                {/* Clubspot link */}
                 {result?.resultsUrl && (
                   <a href={result.resultsUrl} target="_blank" rel="noopener noreferrer"
                     className="inline-flex items-center gap-1.5 text-sm text-primary underline-offset-4 hover:underline pt-1">
@@ -289,7 +260,15 @@ export function ResultsView({
                   </div>
                 )}
 
-                <PhotoUploader raceDate={date} sailor={sailor} photos={photos} />
+                <Separator />
+
+                <PhotoGrid
+                  photos={photos}
+                  sailor={sailor}
+                  raceDate={date}
+                  showUploader
+                  showUploadButton
+                />
 
                 <Separator />
 
