@@ -1,0 +1,406 @@
+"use client";
+
+import { useState, useTransition, useRef } from "react";
+import { saveResult, uploadRacePhoto, deleteRacePhoto } from "@/lib/actions";
+import { formatDateLong } from "@/lib/dates";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Trophy, Plus, Users, Camera, Trash2, ChevronDown, X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import type { RaceResult, RacePhoto } from "@/lib/schema";
+
+const STATUS_COLORS: Record<string, string> = {
+  in: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800",
+  maybe: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200 dark:border-amber-800",
+  out: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 border-red-200 dark:border-red-800 opacity-60",
+};
+
+function PhotoUploader({
+  raceDate,
+  sailor,
+  photos,
+}: {
+  raceDate: string;
+  sailor: string;
+  photos: RacePhoto[];
+}) {
+  const [isPending, startTransition] = useTransition();
+  const [lightbox, setLightbox] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
+
+  function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const caption = null;
+    startTransition(async () => {
+      await uploadRacePhoto(raceDate, sailor, file, caption);
+      router.refresh();
+      if (fileRef.current) fileRef.current.value = "";
+    });
+  }
+
+  function handleDelete(photoId: number, url: string) {
+    startTransition(async () => {
+      await deleteRacePhoto(photoId, url);
+      router.refresh();
+    });
+  }
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+          <Camera className="h-3.5 w-3.5" />
+          Photos ({photos.length})
+        </p>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-7 text-xs text-muted-foreground"
+          disabled={isPending}
+          onClick={() => fileRef.current?.click()}
+        >
+          {isPending ? "Uploading…" : "+ Add photo"}
+        </Button>
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleUpload}
+        />
+      </div>
+
+      {photos.length > 0 && (
+        <div className="grid grid-cols-3 gap-1.5">
+          {photos.map((photo) => (
+            <div key={photo.id} className="relative group aspect-square rounded-md overflow-hidden bg-muted">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={photo.url}
+                alt={photo.caption ?? "Race photo"}
+                className="w-full h-full object-cover cursor-pointer"
+                onClick={() => setLightbox(photo.url)}
+              />
+              <button
+                onClick={() => handleDelete(photo.id, photo.url)}
+                disabled={isPending}
+                className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <X className="h-3 w-3" />
+              </button>
+              {photo.uploadedBy && (
+                <p className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-[10px] px-1 py-0.5 truncate opacity-0 group-hover:opacity-100 transition-opacity">
+                  {photo.uploadedBy}
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {lightbox && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+          onClick={() => setLightbox(null)}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={lightbox}
+            alt="Race photo"
+            className="max-w-full max-h-full rounded-lg object-contain"
+            onClick={(e) => e.stopPropagation()}
+          />
+          <button
+            className="absolute top-4 right-4 text-white"
+            onClick={() => setLightbox(null)}
+          >
+            <X className="h-6 w-6" />
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AttendanceSection({
+  raceDate,
+  availByDate,
+  loggedCrew,
+  crew,
+}: {
+  raceDate: string;
+  availByDate: Record<string, Record<string, string>>;
+  loggedCrew: string[];
+  crew: string[];
+}) {
+  const statuses = availByDate[raceDate] ?? {};
+  const hasStatuses = Object.keys(statuses).length > 0;
+  const hasLoggedCrew = loggedCrew.length > 0;
+
+  if (!hasStatuses && !hasLoggedCrew) return null;
+
+  const inNames = hasLoggedCrew
+    ? loggedCrew
+    : crew.filter((n) => statuses[n] === "in");
+  const maybeNames = hasLoggedCrew ? [] : crew.filter((n) => statuses[n] === "maybe");
+  const outNames = hasLoggedCrew ? [] : crew.filter((n) => statuses[n] === "out");
+
+  return (
+    <div className="space-y-1.5">
+      <p className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+        <Users className="h-3.5 w-3.5" />
+        {hasLoggedCrew ? "Crew" : "Availability"}
+      </p>
+      <div className="flex flex-wrap gap-1">
+        {inNames.map((name) => (
+          <Badge key={name} variant="outline" className={STATUS_COLORS.in}>
+            {name}
+          </Badge>
+        ))}
+        {maybeNames.map((name) => (
+          <Badge key={name} variant="outline" className={STATUS_COLORS.maybe}>
+            {name}
+          </Badge>
+        ))}
+        {outNames.map((name) => (
+          <Badge key={name} variant="outline" className={STATUS_COLORS.out}>
+            {name}
+          </Badge>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export function ResultsView({
+  results,
+  crew,
+  sailor,
+  availByDate,
+  photosByDate,
+}: {
+  results: RaceResult[];
+  crew: string[];
+  sailor: string;
+  availByDate: Record<string, Record<string, string>>;
+  photosByDate: Record<string, RacePhoto[]>;
+}) {
+  const [showForm, setShowForm] = useState(false);
+  const [selectedCrew, setSelectedCrew] = useState<string[]>([]);
+  const [isPending, startTransition] = useTransition();
+  const [expandedDate, setExpandedDate] = useState<string | null>(null);
+  const router = useRouter();
+
+  const withPlace = results.filter((r) => r.place !== null);
+  const avgPlace =
+    withPlace.length > 0
+      ? (withPlace.reduce((sum, r) => sum + r.place!, 0) / withPlace.length).toFixed(1)
+      : null;
+
+  function toggleCrew(name: string) {
+    setSelectedCrew((prev) =>
+      prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name]
+    );
+  }
+
+  function handleSave(formData: FormData) {
+    const raceDate = formData.get("raceDate") as string;
+    const place = formData.get("place") ? Number(formData.get("place")) : null;
+    const fleetSize = formData.get("fleetSize") ? Number(formData.get("fleetSize")) : null;
+    const notes = (formData.get("notes") as string) || null;
+
+    startTransition(async () => {
+      await saveResult(raceDate, place, fleetSize, notes, selectedCrew.length > 0 ? selectedCrew : null);
+      setShowForm(false);
+      setSelectedCrew([]);
+      router.refresh();
+    });
+  }
+
+  // Build all past dates from results + availability keys (show even without a logged result)
+  const allDates = new Set([
+    ...results.map((r) => r.raceDate),
+    ...Object.keys(availByDate),
+  ]);
+  const sortedDates = [...allDates].sort((a, b) => b.localeCompare(a));
+
+  return (
+    <div className="space-y-3">
+      {withPlace.length > 0 && (
+        <Card>
+          <CardContent className="px-4 py-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Trophy className="h-4 w-4 text-amber-500" />
+              <span className="text-sm font-medium">Season Summary</span>
+            </div>
+            <div className="grid grid-cols-3 gap-4 text-center">
+              <div>
+                <p className="text-2xl font-bold">{withPlace.length}</p>
+                <p className="text-xs text-muted-foreground">Races</p>
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{avgPlace}</p>
+                <p className="text-xs text-muted-foreground">Avg Place</p>
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{withPlace.filter((r) => r.place === 1).length}</p>
+                <p className="text-xs text-muted-foreground">Wins</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {showForm ? (
+        <Card>
+          <CardContent className="px-4 py-4">
+            <form action={handleSave} className="space-y-3">
+              <p className="text-sm font-medium">Log a Result</p>
+              <input
+                name="raceDate"
+                type="date"
+                required
+                className="w-full rounded-md border bg-transparent px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+              />
+              <div className="grid grid-cols-2 gap-2">
+                <input
+                  name="place"
+                  type="number"
+                  min="1"
+                  placeholder="Place (e.g. 3)"
+                  className="rounded-md border bg-transparent px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                />
+                <input
+                  name="fleetSize"
+                  type="number"
+                  min="1"
+                  placeholder="Fleet size"
+                  className="rounded-md border bg-transparent px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                />
+              </div>
+              <input
+                name="notes"
+                type="text"
+                placeholder="Notes (optional)"
+                className="w-full rounded-md border bg-transparent px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+              />
+              <div>
+                <p className="text-xs font-medium text-muted-foreground mb-1.5">Who sailed?</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {crew.map((name) => (
+                    <Button
+                      key={name}
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className={
+                        selectedCrew.includes(name)
+                          ? "bg-emerald-600 text-white border-emerald-600 hover:bg-emerald-700"
+                          : "text-muted-foreground"
+                      }
+                      onClick={() => toggleCrew(name)}
+                    >
+                      {name}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button size="sm" type="submit" disabled={isPending}>
+                  Save
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  type="button"
+                  onClick={() => { setShowForm(false); setSelectedCrew([]); }}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      ) : (
+        <Button variant="outline" className="w-full" onClick={() => setShowForm(true)}>
+          <Plus className="h-4 w-4 mr-1" />
+          Log Race Result
+        </Button>
+      )}
+
+      <Separator />
+
+      {sortedDates.length === 0 && (
+        <Card>
+          <CardContent className="py-6 text-center text-sm text-muted-foreground">
+            <p className="font-medium mb-1">No history yet</p>
+            <p>Results and attendance will appear here after race nights.</p>
+          </CardContent>
+        </Card>
+      )}
+
+      {sortedDates.map((date) => {
+        const result = results.find((r) => r.raceDate === date);
+        const loggedCrew: string[] = result?.crew ? JSON.parse(result.crew) : [];
+        const photos = photosByDate[date] ?? [];
+        const isExpanded = expandedDate === date;
+
+        return (
+          <Card key={date}>
+            <button
+              className="w-full text-left px-4 py-3 flex items-center justify-between gap-2"
+              onClick={() => setExpandedDate(isExpanded ? null : date)}
+            >
+              <div>
+                <p className="text-sm font-medium">{formatDateLong(date)}</p>
+                {result?.notes && (
+                  <p className="text-xs text-muted-foreground mt-0.5">{result.notes}</p>
+                )}
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                {photos.length > 0 && (
+                  <Camera className="h-3.5 w-3.5 text-muted-foreground" />
+                )}
+                {result?.place != null ? (
+                  <Badge
+                    variant="outline"
+                    className={
+                      result.place === 1
+                        ? "bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800 text-base px-3"
+                        : result.place <= 3
+                          ? "bg-muted text-foreground text-base px-3"
+                          : "text-base px-3"
+                    }
+                  >
+                    {result.place}{result.fleetSize ? `/${result.fleetSize}` : ""}
+                  </Badge>
+                ) : (
+                  <span className="text-sm text-muted-foreground">—</span>
+                )}
+                <ChevronDown
+                  className={`h-4 w-4 text-muted-foreground transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                />
+              </div>
+            </button>
+
+            {isExpanded && (
+              <CardContent className="px-4 pb-4 pt-0 border-t space-y-3">
+                <AttendanceSection
+                  raceDate={date}
+                  availByDate={availByDate}
+                  loggedCrew={loggedCrew}
+                  crew={crew}
+                />
+                <PhotoUploader raceDate={date} sailor={sailor} photos={photos} />
+              </CardContent>
+            )}
+          </Card>
+        );
+      })}
+    </div>
+  );
+}
