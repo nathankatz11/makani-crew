@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition, useRef } from "react";
-import { saveResult, uploadRacePhoto, deleteRacePhoto, setAvailability, setRaceOverride, clearRaceOverride } from "@/lib/actions";
+import { saveResult, uploadRacePhoto, deleteRacePhoto, setAvailability } from "@/lib/actions";
 import { compressImage } from "@/lib/compress-image";
 import { formatDateLong } from "@/lib/dates";
 import { RaceNotes } from "@/components/race-notes";
@@ -10,15 +10,15 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Trophy, Camera, X, ChevronDown, ExternalLink, Pencil } from "lucide-react";
+import { Trophy, Camera, X, ChevronDown, ExternalLink, Pencil, Check } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { RaceResult, RacePhoto, RaceOverride, RaceNote } from "@/lib/schema";
 import type { AvailabilityStatus } from "@/lib/schema";
 
-const STATUS_OPTIONS: { value: AvailabilityStatus; label: string; activeClass: string }[] = [
-  { value: "in", label: "Sailed", activeClass: "bg-emerald-600 text-white hover:bg-emerald-700 border-emerald-600" },
-  { value: "maybe", label: "Maybe", activeClass: "bg-amber-500 text-white hover:bg-amber-600 border-amber-500" },
-  { value: "out", label: "Out", activeClass: "bg-red-600 text-white hover:bg-red-700 border-red-600" },
+const STATUS_OPTIONS: { value: AvailabilityStatus; label: string; activeClass: string; inactiveClass: string }[] = [
+  { value: "in", label: "Sailed", activeClass: "bg-emerald-600 text-white hover:bg-emerald-700 border-emerald-600 font-semibold", inactiveClass: "border-emerald-200 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-800 dark:text-emerald-400" },
+  { value: "maybe", label: "Maybe", activeClass: "bg-amber-500 text-white hover:bg-amber-600 border-amber-500 font-semibold", inactiveClass: "border-amber-200 text-amber-700 hover:bg-amber-50 dark:border-amber-800 dark:text-amber-400" },
+  { value: "out", label: "Out", activeClass: "bg-red-600 text-white hover:bg-red-700 border-red-600 font-semibold", inactiveClass: "border-red-200 text-red-700 hover:bg-red-50 dark:border-red-800 dark:text-red-400" },
 ];
 
 const STATUS_COLORS: Record<string, string> = {
@@ -265,13 +265,17 @@ export function ResultsView({
                   <div className="pt-1">
                     <p className="text-xs font-medium text-muted-foreground mb-1.5">Your status</p>
                     <div className="flex gap-1.5 flex-wrap">
-                      {STATUS_OPTIONS.map((opt) => (
-                        <Button key={opt.value} variant="outline" size="sm" disabled={isPending}
-                          className={myStatus === opt.value ? opt.activeClass : "text-muted-foreground h-7 text-xs"}
-                          onClick={() => handleStatusChange(date, opt.value)}>
-                          {opt.label}
-                        </Button>
-                      ))}
+                      {STATUS_OPTIONS.map((opt) => {
+                        const isActive = myStatus === opt.value;
+                        return (
+                          <Button key={opt.value} variant="outline" size="sm" disabled={isPending}
+                            className={`h-7 text-xs ${isActive ? opt.activeClass : opt.inactiveClass}`}
+                            onClick={() => handleStatusChange(date, opt.value)}>
+                            {isActive && <Check className="h-3 w-3 mr-1" />}
+                            {opt.label}
+                          </Button>
+                        );
+                      })}
                     </div>
                   </div>
                 )}

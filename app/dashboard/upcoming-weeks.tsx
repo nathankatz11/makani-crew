@@ -11,13 +11,13 @@ import { RaceNotes } from "@/components/race-notes";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, PartyPopper, Pause } from "lucide-react";
+import { Check, ChevronDown, PartyPopper, Pause } from "lucide-react";
 import type { AvailabilityStatus, RaceNote, RaceOverride } from "@/lib/schema";
 
-const STATUS_OPTIONS: { value: AvailabilityStatus; label: string; activeClass: string }[] = [
-  { value: "in", label: "In", activeClass: "bg-emerald-600 text-white hover:bg-emerald-700 border-emerald-600" },
-  { value: "maybe", label: "Maybe", activeClass: "bg-amber-500 text-white hover:bg-amber-600 border-amber-500" },
-  { value: "out", label: "Out", activeClass: "bg-red-600 text-white hover:bg-red-700 border-red-600" },
+const STATUS_OPTIONS: { value: AvailabilityStatus; label: string; activeClass: string; inactiveClass: string }[] = [
+  { value: "in", label: "In", activeClass: "bg-emerald-600 text-white hover:bg-emerald-700 border-emerald-600 font-semibold", inactiveClass: "border-emerald-200 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-800 dark:text-emerald-400" },
+  { value: "maybe", label: "Maybe", activeClass: "bg-amber-500 text-white hover:bg-amber-600 border-amber-500 font-semibold", inactiveClass: "border-amber-200 text-amber-700 hover:bg-amber-50 dark:border-amber-800 dark:text-amber-400" },
+  { value: "out", label: "Out", activeClass: "bg-red-600 text-white hover:bg-red-700 border-red-600 font-semibold", inactiveClass: "border-red-200 text-red-700 hover:bg-red-50 dark:border-red-800 dark:text-red-400" },
 ];
 
 interface WeekData {
@@ -135,18 +135,17 @@ export function UpcomingWeeks({
                     <div className="pt-2">
                       <p className="text-xs font-medium text-muted-foreground mb-1.5">Your status</p>
                       <div className="flex gap-1.5">
-                        {STATUS_OPTIONS.map((opt) => (
-                          <Button
-                            key={opt.value}
-                            variant="outline"
-                            size="sm"
-                            disabled={isPending}
-                            className={myStatus === opt.value ? opt.activeClass : "text-muted-foreground h-7 text-xs"}
-                            onClick={() => handleStatusChange(week.date, opt.value)}
-                          >
-                            {opt.label}
-                          </Button>
-                        ))}
+                        {STATUS_OPTIONS.map((opt) => {
+                          const isActive = myStatus === opt.value;
+                          return (
+                            <Button key={opt.value} variant="outline" size="sm" disabled={isPending}
+                              className={`h-7 text-xs ${isActive ? opt.activeClass : opt.inactiveClass}`}
+                              onClick={() => handleStatusChange(week.date, opt.value)}>
+                              {isActive && <Check className="h-3 w-3 mr-1" />}
+                              {opt.label}
+                            </Button>
+                          );
+                        })}
                       </div>
                     </div>
 
