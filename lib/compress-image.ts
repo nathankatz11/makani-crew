@@ -1,10 +1,10 @@
-import heic2any from "heic2any";
-
+// heic2any is dynamically imported to avoid "window is not defined" during SSR
 const MAX_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
 const MAX_DIMENSION = 1600;
 const MIN_VALID_SIZE = 10_000;
 
 async function convertHeic(file: File): Promise<File> {
+  const heic2any = (await import("heic2any")).default;
   const blob = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.85 });
   const result = Array.isArray(blob) ? blob[0] : blob;
   return new File([result], file.name.replace(/\.heic$/i, ".jpg"), { type: "image/jpeg" });

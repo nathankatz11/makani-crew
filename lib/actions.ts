@@ -291,7 +291,13 @@ export async function uploadRacePhoto(
 
   try {
     const filename = `races/${raceDate}/${Date.now()}-${uploadedBy}.jpg`;
-    const blob = await put(filename, file, { access: "public", addRandomSuffix: true });
+    const token = process.env.BLOB_READ_WRITE_TOKEN;
+    console.log("Blob token present:", !!token, "| File size:", file.size, "| File type:", file.type);
+    const blob = await put(filename, file, {
+      access: "public",
+      addRandomSuffix: true,
+      token,
+    });
     const db = getDb();
     const result = await db
       .insert(racePhotos)
@@ -300,7 +306,7 @@ export async function uploadRacePhoto(
     return { id: result[0].id };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Upload failed";
-    console.error("Photo upload error:", message);
+    console.error("Photo upload error (full):", message);
     return { error: `Upload failed: ${message}` };
   }
 }
