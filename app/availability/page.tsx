@@ -6,6 +6,7 @@ import { Nav } from "@/components/nav";
 import { StatusTimeline } from "./status-timeline";
 import { CaptainManager } from "@/components/captain-manager";
 import { Anchor } from "lucide-react";
+import { ThemeToggle } from "@/components/theme-toggle";
 import type { AvailabilityStatus } from "@/lib/schema";
 
 const CAPTAINS = ["Steve"];
@@ -40,12 +41,15 @@ export default async function AvailabilityPage() {
   return (
     <div className="flex flex-1 flex-col">
       <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur px-4 py-3">
-        <div className="flex items-center gap-2">
-          <Anchor className="h-5 w-5 text-muted-foreground" />
-          <h1 className="text-lg font-semibold">My Availability</h1>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Anchor className="h-5 w-5 text-muted-foreground" />
+            <h1 className="text-lg font-semibold">Captain View</h1>
+          </div>
+          <ThemeToggle />
         </div>
         <p className="text-xs text-muted-foreground mt-0.5">
-          Tap to set your status &amp; role for each race
+          Set crew status &amp; roles for each race
         </p>
       </header>
 

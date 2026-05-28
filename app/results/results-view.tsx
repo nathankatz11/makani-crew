@@ -69,7 +69,7 @@ function PhotoUploader({ raceDate, sailor, photos }: { raceDate: string; sailor:
           {photos.map((photo) => (
             <div key={photo.id} className="relative group aspect-square rounded-md overflow-hidden bg-muted">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={photo.url} alt="Race photo" className="w-full h-full object-cover cursor-pointer" onClick={() => setLightbox(photo.url)} />
+              <img src={`/api/photo?url=${encodeURIComponent(photo.url)}`} alt="Race photo" className="w-full h-full object-cover cursor-pointer" onClick={() => setLightbox(`/api/photo?url=${encodeURIComponent(photo.url)}`)} />
               <button onClick={() => handleDelete(photo.id, photo.url)} disabled={isPending} className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                 <X className="h-3 w-3" />
               </button>

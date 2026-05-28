@@ -11,7 +11,7 @@ import {
 } from "./schema";
 import { eq, and, inArray, desc, gte, asc } from "drizzle-orm";
 import type { AvailabilityStatus, RaceStatus } from "./schema";
-import { put, del } from "@vercel/blob";
+import { put, del, head } from "@vercel/blob";
 import { DEFAULT_CREW } from "./crew";
 
 // --- Crew ---
@@ -294,7 +294,7 @@ export async function uploadRacePhoto(
     const token = process.env.BLOB_READ_WRITE_TOKEN;
     console.log("Blob token present:", !!token, "| File size:", file.size, "| File type:", file.type);
     const blob = await put(filename, file, {
-      access: "public",
+      access: "private",
       addRandomSuffix: true,
       token,
     });

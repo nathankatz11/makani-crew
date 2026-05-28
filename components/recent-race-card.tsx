@@ -152,10 +152,10 @@ export function RecentRaceCard({
                     <div key={photo.id} className="relative group aspect-square rounded-md overflow-hidden bg-muted">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
-                        src={photo.url}
+                        src={`/api/photo?url=${encodeURIComponent(photo.url)}`}
                         alt="Race photo"
                         className="w-full h-full object-cover cursor-pointer"
-                        onClick={() => setLightbox(photo.url)}
+                        onClick={() => setLightbox(`/api/photo?url=${encodeURIComponent(photo.url)}`)}
                       />
                       <button
                         onClick={() => handleDelete(photo.id, photo.url)}

@@ -5,6 +5,7 @@ import { getPastRaceDates } from "@/lib/dates";
 import { Nav } from "@/components/nav";
 import { ResultsView } from "./results-view";
 import { Anchor, ExternalLink } from "lucide-react";
+import { ThemeToggle } from "@/components/theme-toggle";
 import type { RaceResult, RacePhoto, RaceOverride, RaceNote } from "@/lib/schema";
 
 const SERIES_LINKS = [
@@ -61,9 +62,12 @@ export default async function ResultsPage() {
   return (
     <div className="flex flex-1 flex-col">
       <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur px-4 py-3">
-        <div className="flex items-center gap-2">
-          <Anchor className="h-5 w-5 text-muted-foreground" />
-          <h1 className="text-lg font-semibold">Race Results</h1>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Anchor className="h-5 w-5 text-muted-foreground" />
+            <h1 className="text-lg font-semibold">Race Results</h1>
+          </div>
+          <ThemeToggle />
         </div>
         <p className="text-xs text-muted-foreground mt-0.5">
           Season record for Makani u&#x2019;i
