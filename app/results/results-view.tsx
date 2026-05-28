@@ -38,7 +38,9 @@ function PhotoUploader({ raceDate, sailor, photos }: { raceDate: string; sailor:
     if (!file) return;
     startTransition(async () => {
       const compressed = await compressImage(file, `${Date.now()}.jpg`);
-      await uploadRacePhoto(raceDate, sailor, compressed, null);
+      const formData = new FormData();
+      formData.append("file", compressed);
+      await uploadRacePhoto(raceDate, sailor, formData, null);
       router.refresh();
       if (fileRef.current) fileRef.current.value = "";
     });
@@ -87,22 +89,16 @@ function PhotoUploader({ raceDate, sailor, photos }: { raceDate: string; sailor:
   );
 }
 
-function PlaceEditor({ raceDate, result, crew, sailor }: { raceDate: string; result: RaceResult | undefined; crew: string[]; sailor: string }) {
+function PlaceEditor({ raceDate, result }: { raceDate: string; result: RaceResult | undefined }) {
   const [isEditing, setIsEditing] = useState(false);
-  const [selectedCrew, setSelectedCrew] = useState<string[]>(() => result?.crew ? JSON.parse(result.crew) : []);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
-  function toggleCrew(name: string) {
-    setSelectedCrew((prev) => prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name]);
-  }
-
   function handleSave(formData: FormData) {
     const place = formData.get("place") ? Number(formData.get("place")) : null;
-    const fleetSize = formData.get("fleetSize") ? Number(formData.get("fleetSize")) : null;
     const resultsUrl = (formData.get("resultsUrl") as string) || null;
     startTransition(async () => {
-      await saveResult(raceDate, place, fleetSize, null, selectedCrew.length > 0 ? selectedCrew : null, resultsUrl);
+      await saveResult(raceDate, place, null, null, null, resultsUrl);
       setIsEditing(false);
       router.refresh();
     });
@@ -112,31 +108,17 @@ function PlaceEditor({ raceDate, result, crew, sailor }: { raceDate: string; res
     return (
       <Button variant="ghost" size="sm" className="text-xs text-muted-foreground h-7 px-2" onClick={() => setIsEditing(true)}>
         <Pencil className="h-3.5 w-3.5 mr-1" />
-        {result?.place != null ? "Edit result" : "Log place & fleet"}
+        {result?.place != null ? "Edit result" : "Log place"}
       </Button>
     );
   }
 
   return (
     <form action={handleSave} className="space-y-2 pt-1">
-      <div className="grid grid-cols-2 gap-2">
-        <input name="place" type="number" min="1" defaultValue={result?.place ?? ""} placeholder="Place (e.g. 3)"
-          className="rounded-md border bg-transparent px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-ring" />
-        <input name="fleetSize" type="number" min="1" defaultValue={result?.fleetSize ?? ""} placeholder="Fleet size"
-          className="rounded-md border bg-transparent px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-ring" />
-      </div>
+      <input name="place" type="number" min="1" defaultValue={result?.place ?? ""} placeholder="Finishing place (e.g. 3)"
+        className="w-full rounded-md border bg-transparent px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-ring" />
       <input name="resultsUrl" type="url" defaultValue={result?.resultsUrl ?? ""} placeholder="Clubspot results URL (optional)"
         className="w-full rounded-md border bg-transparent px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-ring" />
-      <div>
-        <p className="text-xs font-medium text-muted-foreground mb-1.5">Who sailed?</p>
-        <div className="flex flex-wrap gap-1.5">
-          {crew.map((name) => (
-            <Button key={name} type="button" variant="outline" size="sm"
-              className={selectedCrew.includes(name) ? "bg-emerald-600 text-white border-emerald-600 hover:bg-emerald-700 h-7 text-xs" : "text-muted-foreground h-7 text-xs"}
-              onClick={() => toggleCrew(name)}>{name}</Button>
-          ))}
-        </div>
-      </div>
       <div className="flex gap-2">
         <Button size="sm" type="submit" disabled={isPending}>Save</Button>
         <Button size="sm" variant="ghost" type="button" onClick={() => setIsEditing(false)}>Cancel</Button>
@@ -253,7 +235,7 @@ export function ResultsView({
                       ? "bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800 text-base px-3"
                       : result.place <= 3 ? "bg-muted text-foreground text-base px-3" : "text-base px-3"
                   }>
-                    {result.place}{result.fleetSize ? `/${result.fleetSize}` : ""}
+                    {result.place}
                   </Badge>
                 ) : (
                   <span className="text-sm text-muted-foreground">—</span>
@@ -303,28 +285,13 @@ export function ResultsView({
                   </div>
                 )}
 
-                {/* Existing notes */}
-                {notes.length > 0 && (
-                  <div className="space-y-1">
-                    {notes.map((n) => (
-                      <p key={n.id} className="text-xs text-muted-foreground">
-                        <span className="font-medium text-foreground">{n.sailorName}:</span> {n.note}
-                      </p>
-                    ))}
-                  </div>
-                )}
-
-                <Separator />
-
                 <PhotoUploader raceDate={date} sailor={sailor} photos={photos} />
 
                 <Separator />
 
-                {/* Place / result editor */}
-                <PlaceEditor raceDate={date} result={result} crew={crew} sailor={sailor} />
+                <PlaceEditor raceDate={date} result={result} />
 
-                {/* Notes + race status — same UI as home */}
-                <div className="flex flex-wrap gap-1">
+                <div className="space-y-1">
                   <RaceNotes raceDate={date} sailor={sailor} existingNotes={notes} />
                   <RaceOverrideControl raceDate={date} sailor={sailor} override={override} />
                 </div>

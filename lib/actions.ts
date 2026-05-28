@@ -166,6 +166,11 @@ export async function deleteNote(noteId: number) {
   await db.delete(raceNotes).where(eq(raceNotes.id, noteId));
 }
 
+export async function editNote(noteId: number, note: string) {
+  const db = getDb();
+  await db.update(raceNotes).set({ note }).where(eq(raceNotes.id, noteId));
+}
+
 // --- Race Overrides ---
 
 export async function getOverridesForDates(dates: string[]) {
@@ -278,19 +283,26 @@ export async function getPhotosForDates(dates: string[]) {
 export async function uploadRacePhoto(
   raceDate: string,
   uploadedBy: string,
-  file: File,
+  formData: FormData,
   caption: string | null
-) {
-  const ext = file.name.split(".").pop() ?? "jpg";
-  const filename = `races/${raceDate}/${Date.now()}-${uploadedBy}.${ext}`;
-  const blob = await put(filename, file, { access: "public" });
+): Promise<{ error?: string; id?: number }> {
+  const file = formData.get("file") as File;
+  if (!file || file.size === 0) return { error: "No file provided" };
 
-  const db = getDb();
-  const result = await db
-    .insert(racePhotos)
-    .values({ raceDate, uploadedBy, url: blob.url, caption })
-    .returning({ id: racePhotos.id });
-  return result[0].id;
+  try {
+    const filename = `races/${raceDate}/${Date.now()}-${uploadedBy}.jpg`;
+    const blob = await put(filename, file, { access: "public", addRandomSuffix: true });
+    const db = getDb();
+    const result = await db
+      .insert(racePhotos)
+      .values({ raceDate, uploadedBy, url: blob.url, caption })
+      .returning({ id: racePhotos.id });
+    return { id: result[0].id };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Upload failed";
+    console.error("Photo upload error:", message);
+    return { error: `Upload failed: ${message}` };
+  }
 }
 
 export async function deleteRacePhoto(photoId: number, url: string) {

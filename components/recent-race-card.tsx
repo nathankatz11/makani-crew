@@ -47,7 +47,9 @@ export function RecentRaceCard({
     if (!file) return;
     startTransition(async () => {
       const compressed = await compressImage(file, `${Date.now()}.jpg`);
-      await uploadRacePhoto(date, sailor, compressed, null);
+      const formData = new FormData();
+      formData.append("file", compressed);
+      await uploadRacePhoto(date, sailor, formData, null);
       router.refresh();
       if (fileRef.current) fileRef.current.value = "";
     });

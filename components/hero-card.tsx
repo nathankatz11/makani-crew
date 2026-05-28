@@ -102,17 +102,27 @@ export function HeroCard({
             )}
           </div>
           {!isCancelled && (
-            <div className="text-right">
-              <Badge
-                variant={hasEnough ? "default" : "outline"}
-                className={
-                  hasEnough
-                    ? "bg-emerald-600 hover:bg-emerald-600 text-white text-sm px-3 py-1"
-                    : "border-amber-500 text-amber-600 text-sm px-3 py-1"
-                }
-              >
-                {hasEnough ? "GO" : `Need ${MIN_CREW - inCount} more`}
-              </Badge>
+            <div className="text-right flex flex-col items-end gap-1">
+              {(() => {
+                const myStatus = statuses.get(sailor)?.status ?? "unknown";
+                return (
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <span>{inCount} sailor{inCount !== 1 ? "s" : ""}</span>
+                    <span className="opacity-40">|</span>
+                    <span className={
+                      myStatus === "in" ? "text-emerald-500 font-medium" :
+                      myStatus === "maybe" ? "text-amber-500 font-medium" :
+                      myStatus === "out" ? "text-red-400" : "text-muted-foreground"
+                    }>
+                      {myStatus === "in" ? "I'm In" : myStatus === "maybe" ? "I'm Maybe" : myStatus === "out" ? "I'm Out" : "Not set"}
+                    </span>
+                  </div>
+                );
+              })()}
+              {hasEnough
+                ? <Badge className="bg-emerald-600 hover:bg-emerald-600 text-white text-sm px-3 py-1">GO</Badge>
+                : <Badge variant="outline" className="border-amber-500 text-amber-600 text-sm px-3 py-1">Need {MIN_CREW - inCount} more</Badge>
+              }
             </div>
           )}
         </div>
@@ -250,25 +260,6 @@ export function HeroCard({
                 </div>
               </div>
             )}
-          </>
-        )}
-
-        {notes.length > 0 && (
-          <>
-            <Separator />
-            <div>
-              <p className="text-xs font-medium text-muted-foreground mb-1.5">
-                Notes
-              </p>
-              <div className="space-y-1">
-                {notes.map((n) => (
-                  <p key={n.id} className="text-sm">
-                    <span className="font-medium">{n.sailorName}:</span>{" "}
-                    <span className="text-muted-foreground">{n.note}</span>
-                  </p>
-                ))}
-              </div>
-            </div>
           </>
         )}
 

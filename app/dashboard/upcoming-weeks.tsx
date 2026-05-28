@@ -170,18 +170,8 @@ export function UpcomingWeeks({
                   </>
                 )}
 
-                {week.notes.length > 0 && (
-                  <div className="border-t pt-2">
-                    {week.notes.map((n) => (
-                      <p key={n.id} className="text-xs text-muted-foreground">
-                        <span className="font-medium text-foreground">{n.sailorName}:</span> {n.note}
-                      </p>
-                    ))}
-                  </div>
-                )}
-
                 {week.isRace && (
-                  <div className="pt-1">
+                  <div className="pt-1 border-t">
                     <RaceNotes raceDate={week.date} sailor={sailor} existingNotes={week.notes} />
                     <RaceOverrideControl raceDate={week.date} sailor={sailor} override={week.override} />
                   </div>
