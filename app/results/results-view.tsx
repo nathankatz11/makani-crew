@@ -117,7 +117,7 @@ export function ResultsView({
       {showAllPhotos && (
         <Card>
           <CardContent className="px-4 py-4">
-            <PhotoGrid photos={allPhotos} sailor={sailor} showUploader showDateLabel showUploadButton={false} showFilters />
+            <PhotoGrid photos={allPhotos} sailor={sailor} showUploader showDateLabel showUploadButton={false} showFilters masonry />
           </CardContent>
         </Card>
       )}

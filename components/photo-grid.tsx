@@ -9,7 +9,7 @@ import { Camera, X, Download, Trash2, Plus, ChevronLeft, ChevronRight, Play, Pau
 import { formatDateLong } from "@/lib/dates";
 import type { RacePhoto } from "@/lib/schema";
 
-const SLIDESHOW_INTERVAL = 3500; // ms per slide
+const SLIDESHOW_INTERVAL = 1500; // ms per slide
 
 function proxyUrl(url: string) {
   return `/api/photo?url=${encodeURIComponent(url)}`;
@@ -32,14 +32,30 @@ function Lightbox({
   isPending: boolean;
   autoplay?: boolean;
 }) {
-  const [index, setIndex] = useState(initialIndex);
+  // Shuffled order for slideshow; null means sequential
+  const [shuffledOrder] = useState<number[]>(() => {
+    if (!autoplay) return photos.map((_, i) => i);
+    const arr = photos.map((_, i) => i);
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  });
+
+  // Position within shuffled order
+  const [pos, setPos] = useState(() =>
+    autoplay ? shuffledOrder.indexOf(initialIndex) : initialIndex
+  );
   const [playing, setPlaying] = useState(autoplay);
   const startX = useRef<number | null>(null);
+
+  const index = autoplay ? shuffledOrder[pos] : pos;
   const photo = photos[index];
   const src = proxyUrl(photo.url);
 
-  const next = useCallback(() => setIndex((i) => (i + 1) % photos.length), [photos.length]);
-  const prev = useCallback(() => setIndex((i) => (i - 1 + photos.length) % photos.length), [photos.length]);
+  const next = useCallback(() => setPos((p) => (p + 1) % photos.length), [photos.length]);
+  const prev = useCallback(() => setPos((p) => (p - 1 + photos.length) % photos.length), [photos.length]);
 
   // Slideshow timer
   useEffect(() => {
@@ -113,7 +129,7 @@ function Lightbox({
           </Button>
           {photo.uploadedBy === sailor && (
             <Button variant="ghost" size="sm" className="text-white/70 hover:text-red-400" disabled={isPending}
-              onClick={() => { onDelete(photo.id, photo.url); photos.length > 1 ? next() : onClose(); }}>
+              onClick={() => { onDelete(photo.id, photo.url); if (photos.length > 1) next(); else onClose(); }}>
               <Trash2 className="h-4 w-4" />
             </Button>
           )}
@@ -162,8 +178,8 @@ function Lightbox({
         {photos.length > 1 && (
           <div className="flex justify-center gap-1.5">
             {photos.map((_, i) => (
-              <button key={i} onClick={() => { setPlaying(false); setIndex(i); }}
-                className={`h-1.5 rounded-full transition-all ${i === index ? "w-4 bg-white" : "w-1.5 bg-white/40"}`}
+              <button key={i} onClick={() => { setPlaying(false); setPos(i); }}
+                className={`h-1.5 rounded-full transition-all ${i === pos ? "w-4 bg-white" : "w-1.5 bg-white/40"}`}
               />
             ))}
           </div>
@@ -181,6 +197,7 @@ export function PhotoGrid({
   showDateLabel = false,
   showUploadButton = true,
   showFilters = false,
+  masonry = false,
 }: {
   photos: RacePhoto[];
   sailor: string;
@@ -189,6 +206,7 @@ export function PhotoGrid({
   showDateLabel?: boolean;
   showUploadButton?: boolean;
   showFilters?: boolean;
+  masonry?: boolean;
 }) {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [slideshowStart, setSlideshowStart] = useState(false);
@@ -289,34 +307,63 @@ export function PhotoGrid({
           </div>
         )}
 
-        {/* Grid */}
+        {/* Grid — masonry or uniform */}
         {visiblePhotos.length > 0 && (
-          <div className="grid grid-cols-3 gap-1.5">
-            {visiblePhotos.map((photo, i) => (
-              <div
-                key={photo.id}
-                className="relative group aspect-square rounded-md overflow-hidden bg-muted cursor-pointer"
-                onClick={() => { setSlideshowStart(false); setLightboxIndex(i); }}
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={proxyUrl(photo.url)} alt="Race photo" className="w-full h-full object-cover" />
-                {showDateLabel && (
-                  <div className="absolute top-0 left-0 right-0 bg-black/60 text-white text-[10px] px-1.5 py-1 truncate opacity-0 group-hover:opacity-100 transition-opacity">
-                    {formatDateLong(photo.raceDate)}
-                  </div>
-                )}
-                <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[10px] px-1.5 py-1 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity">
-                  {showUploader && <span className="truncate">{photo.uploadedBy}</span>}
-                  {photo.uploadedBy === sailor && (
-                    <button onClick={(e) => { e.stopPropagation(); handleDelete(photo.id, photo.url); }}
-                      disabled={isPending} className="ml-auto shrink-0 hover:text-red-400">
-                      <Trash2 className="h-3 w-3" />
-                    </button>
+          masonry ? (
+            <div style={{ columns: "2", columnGap: "6px" }}>
+              {visiblePhotos.map((photo, i) => (
+                <div
+                  key={photo.id}
+                  className="relative group rounded-md overflow-hidden bg-muted cursor-pointer mb-1.5 break-inside-avoid"
+                  onClick={() => { setSlideshowStart(false); setLightboxIndex(i); }}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={proxyUrl(photo.url)} alt="Race photo" className="w-full h-auto block" />
+                  {showDateLabel && (
+                    <div className="absolute top-0 left-0 right-0 bg-black/60 text-white text-[10px] px-1.5 py-1 truncate opacity-0 group-hover:opacity-100 transition-opacity">
+                      {formatDateLong(photo.raceDate)}
+                    </div>
                   )}
+                  <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[10px] px-1.5 py-1 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity">
+                    {showUploader && <span className="truncate">{photo.uploadedBy}</span>}
+                    {photo.uploadedBy === sailor && (
+                      <button onClick={(e) => { e.stopPropagation(); handleDelete(photo.id, photo.url); }}
+                        disabled={isPending} className="ml-auto shrink-0 hover:text-red-400">
+                        <Trash2 className="h-3 w-3" />
+                      </button>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-3 gap-1.5">
+              {visiblePhotos.map((photo, i) => (
+                <div
+                  key={photo.id}
+                  className="relative group aspect-square rounded-md overflow-hidden bg-muted cursor-pointer"
+                  onClick={() => { setSlideshowStart(false); setLightboxIndex(i); }}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={proxyUrl(photo.url)} alt="Race photo" className="w-full h-full object-cover" />
+                  {showDateLabel && (
+                    <div className="absolute top-0 left-0 right-0 bg-black/60 text-white text-[10px] px-1.5 py-1 truncate opacity-0 group-hover:opacity-100 transition-opacity">
+                      {formatDateLong(photo.raceDate)}
+                    </div>
+                  )}
+                  <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[10px] px-1.5 py-1 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity">
+                    {showUploader && <span className="truncate">{photo.uploadedBy}</span>}
+                    {photo.uploadedBy === sailor && (
+                      <button onClick={(e) => { e.stopPropagation(); handleDelete(photo.id, photo.url); }}
+                        disabled={isPending} className="ml-auto shrink-0 hover:text-red-400">
+                        <Trash2 className="h-3 w-3" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )
         )}
 
         {showFilters && filterSailor && visiblePhotos.length === 0 && (
