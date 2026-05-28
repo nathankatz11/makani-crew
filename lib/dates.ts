@@ -55,7 +55,7 @@ export function getUpcomingWednesdays(count?: number): string[] {
 
   const isWednesday = now.getDay() === 3;
   const cutoff =
-    isWednesday && now.getHours() < 20
+    isWednesday && now.getHours() < 18
       ? today
       : formatDate(new Date(now.getTime() + 86400000));
 
@@ -69,7 +69,7 @@ export function getUpcomingFullSchedule(): SeasonDate[] {
 
   const isWednesday = now.getDay() === 3;
   const cutoff =
-    isWednesday && now.getHours() < 20
+    isWednesday && now.getHours() < 18
       ? today
       : formatDate(new Date(now.getTime() + 86400000));
 
