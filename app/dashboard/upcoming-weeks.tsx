@@ -96,23 +96,21 @@ export function UpcomingWeeks({
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 {!isCancelled && !isBreak && (
-                  <div className="flex items-center gap-1.5 text-xs">
-                    {inCount > 0 && (
-                      <span className="text-emerald-500 font-medium">{inCount} In</span>
-                    )}
-                    {maybeCount > 0 && (
-                      <span className="text-amber-500 font-medium">{maybeCount} ?</span>
-                    )}
-                    {outCount > 0 && (
-                      <span className="text-red-400 opacity-70">{outCount} Out</span>
-                    )}
-                    {inCount === 0 && maybeCount === 0 && outCount === 0 && (
-                      <span className="text-muted-foreground">—</span>
-                    )}
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <span>{inCount} sailor{inCount !== 1 ? "s" : ""}</span>
+                    <span className="opacity-40">|</span>
+                    <span className={
+                      myStatus === "in" ? "text-emerald-500 font-medium" :
+                      myStatus === "maybe" ? "text-amber-500 font-medium" :
+                      myStatus === "out" ? "text-red-400" :
+                      "text-muted-foreground"
+                    }>
+                      {myStatus === "in" ? "I'm In" :
+                       myStatus === "maybe" ? "I'm Maybe" :
+                       myStatus === "out" ? "I'm Out" :
+                       "Not set"}
+                    </span>
                   </div>
-                )}
-                {!isCancelled && !isBreak && hasEnough && (
-                  <Badge className="bg-emerald-600 hover:bg-emerald-600 text-white text-xs px-1.5">GO</Badge>
                 )}
                 {isBreak && !isCancelled && (
                   <Badge variant="outline" className="text-muted-foreground">Break</Badge>
