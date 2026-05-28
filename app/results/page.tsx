@@ -1,11 +1,16 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { getAllResults, getCrewList, getPastAvailabilityForDates, getPhotosForDates, getOverridesForDates } from "@/lib/actions";
+import { getAllResults, getCrewList, getPastAvailabilityForDates, getPhotosForDates, getOverridesForDates, getNotesForDates } from "@/lib/actions";
 import { getPastRaceDates } from "@/lib/dates";
 import { Nav } from "@/components/nav";
 import { ResultsView } from "./results-view";
-import { Anchor } from "lucide-react";
-import type { RaceResult, RacePhoto, RaceOverride } from "@/lib/schema";
+import { Anchor, ExternalLink } from "lucide-react";
+import type { RaceResult, RacePhoto, RaceOverride, RaceNote } from "@/lib/schema";
+
+const SERIES_LINKS = [
+  { label: "Beer Can Series", url: "https://theclubspot.com/regatta/loIU4PUhgd/results" },
+  { label: "CYC Monroe Series", url: "https://theclubspot.com/regatta/K9jKnrpJ2a/results" },
+];
 
 export default async function ResultsPage() {
   const cookieStore = await cookies();
@@ -19,15 +24,23 @@ export default async function ResultsPage() {
   let pastAvailability: { sailorName: string; raceDate: string; status: string; role: string | null }[] = [];
   let photos: RacePhoto[] = [];
   let overrides: RaceOverride[] = [];
+  let notes: RaceNote[] = [];
   try {
-    [results, pastAvailability, photos, overrides] = await Promise.all([
+    [results, pastAvailability, photos, overrides, notes] = await Promise.all([
       getAllResults(),
       getPastAvailabilityForDates(pastDates),
       getPhotosForDates(pastDates),
       getOverridesForDates(pastDates),
+      getNotesForDates(pastDates),
     ]);
   } catch {
     // DB not set up
+  }
+
+  const notesByDate: Record<string, RaceNote[]> = {};
+  for (const note of notes) {
+    if (!notesByDate[note.raceDate]) notesByDate[note.raceDate] = [];
+    notesByDate[note.raceDate].push(note);
   }
 
   const availByDate: Record<string, Record<string, string>> = {};
@@ -57,7 +70,23 @@ export default async function ResultsPage() {
         </p>
       </header>
 
-      <main className="flex-1 overflow-y-auto p-4 pb-20">
+      <main className="flex-1 overflow-y-auto p-4 pb-20 space-y-4">
+        {/* Series links */}
+        <div className="flex flex-wrap gap-2">
+          {SERIES_LINKS.map(({ label, url }) => (
+            <a
+              key={url}
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:border-foreground transition-colors"
+            >
+              <ExternalLink className="h-3.5 w-3.5" />
+              {label}
+            </a>
+          ))}
+        </div>
+
         <ResultsView
           results={results}
           crew={crew}
@@ -65,6 +94,8 @@ export default async function ResultsPage() {
           availByDate={availByDate}
           photosByDate={photosByDate}
           overridesByDate={overridesByDate}
+          notesByDate={notesByDate}
+          pastDates={pastDates}
         />
       </main>
 
