@@ -11,7 +11,7 @@ export function Nav({ sailor, crew }: { sailor: string; crew: string[] }) {
 
   const links = [
     { href: "/dashboard", label: "Home", icon: CalendarDays },
-    { href: "/availability", label: "Status", icon: Users },
+    ...(sailor === "Steve" ? [{ href: "/availability", label: "Captain View", icon: Users }] : []),
     { href: "/results", label: "Results", icon: Trophy },
   ];
 

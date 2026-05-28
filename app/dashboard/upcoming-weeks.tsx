@@ -62,6 +62,7 @@ export function UpcomingWeeks({
         const statuses = Object.values(week.statuses);
         const inCount = statuses.filter((s) => s.status === "in").length;
         const maybeCount = statuses.filter((s) => s.status === "maybe").length;
+        const outCount = statuses.filter((s) => s.status === "out").length;
         const hasEnough = inCount >= MIN_CREW;
         const isExpanded = expandedDate === week.date;
         const myStatus = week.statuses[sailor]?.status ?? "unknown";
@@ -95,18 +96,23 @@ export function UpcomingWeeks({
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 {!isCancelled && !isBreak && (
-                  <Badge
-                    variant={hasEnough ? "default" : "outline"}
-                    className={
-                      hasEnough
-                        ? "bg-emerald-600 hover:bg-emerald-600 text-white"
-                        : inCount > 0
-                          ? "border-amber-500 text-amber-600"
-                          : ""
-                    }
-                  >
-                    {inCount}{maybeCount > 0 ? `+${maybeCount}?` : ""}
-                  </Badge>
+                  <div className="flex items-center gap-1.5 text-xs">
+                    {inCount > 0 && (
+                      <span className="text-emerald-500 font-medium">{inCount} In</span>
+                    )}
+                    {maybeCount > 0 && (
+                      <span className="text-amber-500 font-medium">{maybeCount} ?</span>
+                    )}
+                    {outCount > 0 && (
+                      <span className="text-red-400 opacity-70">{outCount} Out</span>
+                    )}
+                    {inCount === 0 && maybeCount === 0 && outCount === 0 && (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </div>
+                )}
+                {!isCancelled && !isBreak && hasEnough && (
+                  <Badge className="bg-emerald-600 hover:bg-emerald-600 text-white text-xs px-1.5">GO</Badge>
                 )}
                 {isBreak && !isCancelled && (
                   <Badge variant="outline" className="text-muted-foreground">Break</Badge>
