@@ -45,14 +45,18 @@ export default async function Dashboard() {
   let overridesData: RaceOverride[] = [];
   let recentAvailability: { sailorName: string; raceDate: string; status: string; role: string | null }[] = [];
   let recentPhotos: RacePhoto[] = [];
+  let recentNotes: RaceNote[] = [];
+  let recentOverrides: RaceOverride[] = [];
 
   try {
-    [availabilityData, notesData, overridesData, recentAvailability, recentPhotos] = await Promise.all([
+    [availabilityData, notesData, overridesData, recentAvailability, recentPhotos, recentNotes, recentOverrides] = await Promise.all([
       getAvailabilityForDates(allUpcomingDates),
       getNotesForDates(allUpcomingDates),
       getOverridesForDates(allUpcomingDates),
       recentDates.length > 0 ? getPastAvailabilityForDates(recentDates) : Promise.resolve([]),
       recentDates.length > 0 ? getPhotosForDates(recentDates) : Promise.resolve([]),
+      recentDates.length > 0 ? getNotesForDates(recentDates) : Promise.resolve([]),
+      recentDates.length > 0 ? getOverridesForDates(recentDates) : Promise.resolve([]),
     ]);
   } catch {
     // DB not set up yet
@@ -82,6 +86,7 @@ export default async function Dashboard() {
   for (const row of recentAvailability) {
     recentStatusMap[row.sailorName] = { status: row.status as AvailabilityStatus, role: row.role };
   }
+  const recentOverride = recentRaceDate ? (recentOverrides.find((o) => o.raceDate === recentRaceDate) ?? null) : null;
 
   // Hero card — next race
   const nextRaceDate = raceDates[0];
@@ -148,6 +153,8 @@ export default async function Dashboard() {
               date={recentRaceDate}
               statuses={recentStatusMap}
               photos={recentPhotos}
+              notes={recentNotes}
+              override={recentOverride}
               sailor={sailor}
               crew={crew}
             />

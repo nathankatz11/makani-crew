@@ -104,7 +104,7 @@ function Lightbox({
       </div>
 
       {/* Image + prev/next */}
-      <div className="flex-1 flex items-center justify-center relative" onClick={onClose}>
+      <div className="flex-1 min-h-0 flex items-center justify-center relative overflow-hidden" onClick={onClose}>
         {photos.length > 1 && (
           <button
             className="absolute left-2 z-10 text-white/60 hover:text-white p-2"
@@ -117,7 +117,8 @@ function Lightbox({
         <img
           src={src}
           alt="Race photo"
-          className="max-w-full max-h-full rounded-lg object-contain px-12"
+          className="max-w-full max-h-full w-auto h-auto rounded-lg object-contain px-12"
+          style={{ maxHeight: "calc(100vh - 120px)" }}
           onClick={(e) => e.stopPropagation()}
         />
         {photos.length > 1 && (
@@ -165,13 +166,15 @@ export function PhotoGrid({
   const router = useRouter();
 
   function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file || !raceDate) return;
+    const files = Array.from(e.target.files ?? []);
+    if (files.length === 0 || !raceDate) return;
     startTransition(async () => {
-      const compressed = await compressImage(file, `${Date.now()}.jpg`);
-      const formData = new FormData();
-      formData.append("file", compressed);
-      await uploadRacePhoto(raceDate, sailor, formData, null);
+      for (const file of files) {
+        const compressed = await compressImage(file, `${Date.now()}.jpg`);
+        const formData = new FormData();
+        formData.append("file", compressed);
+        await uploadRacePhoto(raceDate, sailor, formData, null);
+      }
       router.refresh();
       if (fileRef.current) fileRef.current.value = "";
     });
@@ -205,6 +208,7 @@ export function PhotoGrid({
               ref={fileRef}
               type="file"
               accept="image/*,image/heic,image/heif,.heic,.heif"
+              multiple
               className="hidden"
               onChange={handleUpload}
             />
