@@ -34,6 +34,7 @@ export const raceResults = pgTable("race_results", {
   fleetSize: integer("fleet_size"),
   notes: text("notes"),
   crew: text("crew"), // JSON array of sailor names who sailed
+  resultsUrl: text("results_url"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

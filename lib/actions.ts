@@ -8,11 +8,9 @@ import {
   raceResults,
   raceOverrides,
   racePhotos,
-  events,
-  eventRsvps,
 } from "./schema";
-import { eq, and, inArray, desc, gte, lte, asc } from "drizzle-orm";
-import type { AvailabilityStatus, RaceStatus, EventType } from "./schema";
+import { eq, and, inArray, desc, gte, asc } from "drizzle-orm";
+import type { AvailabilityStatus, RaceStatus } from "./schema";
 import { put, del } from "@vercel/blob";
 import { DEFAULT_CREW } from "./crew";
 
@@ -232,7 +230,8 @@ export async function saveResult(
   place: number | null,
   fleetSize: number | null,
   notes: string | null,
-  crew: string[] | null
+  crew: string[] | null,
+  resultsUrl: string | null
 ) {
   const db = getDb();
   const crewJson = crew ? JSON.stringify(crew) : null;
@@ -244,102 +243,12 @@ export async function saveResult(
   if (existing.length > 0) {
     await db
       .update(raceResults)
-      .set({ place, fleetSize, notes, crew: crewJson })
+      .set({ place, fleetSize, notes, crew: crewJson, resultsUrl })
       .where(eq(raceResults.raceDate, raceDate));
   } else {
     await db
       .insert(raceResults)
-      .values({ raceDate, place, fleetSize, notes, crew: crewJson });
-  }
-}
-
-// --- Custom Events ---
-
-export async function getUpcomingEvents() {
-  const db = getDb();
-  const today = new Date().toISOString().split("T")[0];
-  return db
-    .select()
-    .from(events)
-    .where(gte(events.eventDate, today))
-    .orderBy(events.eventDate);
-}
-
-export async function getAllEvents() {
-  const db = getDb();
-  return db.select().from(events).orderBy(desc(events.eventDate));
-}
-
-export async function createEvent(
-  title: string,
-  eventDate: string,
-  eventTime: string | null,
-  eventType: EventType,
-  description: string | null,
-  createdBy: string
-) {
-  const db = getDb();
-  const result = await db
-    .insert(events)
-    .values({ title, eventDate, eventTime, eventType, description, createdBy })
-    .returning({ id: events.id });
-  return result[0].id;
-}
-
-export async function updateEvent(
-  eventId: number,
-  title: string,
-  eventDate: string,
-  eventTime: string | null,
-  eventType: EventType,
-  description: string | null
-) {
-  const db = getDb();
-  await db
-    .update(events)
-    .set({ title, eventDate, eventTime, eventType, description })
-    .where(eq(events.id, eventId));
-}
-
-export async function deleteEvent(eventId: number) {
-  const db = getDb();
-  await db.delete(eventRsvps).where(eq(eventRsvps.eventId, eventId));
-  await db.delete(events).where(eq(events.id, eventId));
-}
-
-export async function getRsvpsForEvents(eventIds: number[]) {
-  if (eventIds.length === 0) return [];
-  const db = getDb();
-  return db
-    .select()
-    .from(eventRsvps)
-    .where(inArray(eventRsvps.eventId, eventIds));
-}
-
-export async function setEventRsvp(
-  eventId: number,
-  sailor: string,
-  status: AvailabilityStatus
-) {
-  const db = getDb();
-  const existing = await db
-    .select()
-    .from(eventRsvps)
-    .where(
-      and(eq(eventRsvps.eventId, eventId), eq(eventRsvps.sailorName, sailor))
-    );
-
-  if (existing.length > 0) {
-    await db
-      .update(eventRsvps)
-      .set({ status, updatedAt: new Date() })
-      .where(
-        and(eq(eventRsvps.eventId, eventId), eq(eventRsvps.sailorName, sailor))
-      );
-  } else {
-    await db
-      .insert(eventRsvps)
-      .values({ eventId, sailorName: sailor, status });
+      .values({ raceDate, place, fleetSize, notes, crew: crewJson, resultsUrl });
   }
 }
 

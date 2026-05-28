@@ -3,12 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import {
-  CalendarDays,
-  CalendarPlus,
-  Trophy,
-  Users,
-} from "lucide-react";
+import { CalendarDays, Trophy, Users } from "lucide-react";
 import { ProfileSwitcher } from "./profile-switcher";
 
 export function Nav({ sailor, crew }: { sailor: string; crew: string[] }) {
@@ -17,7 +12,6 @@ export function Nav({ sailor, crew }: { sailor: string; crew: string[] }) {
   const links = [
     { href: "/dashboard", label: "Home", icon: CalendarDays },
     { href: "/availability", label: "Status", icon: Users },
-    { href: "/events", label: "Events", icon: CalendarPlus },
     { href: "/results", label: "Results", icon: Trophy },
   ];
 

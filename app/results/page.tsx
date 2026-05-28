@@ -1,12 +1,11 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { getAllResults, getCrewList, getPastAvailabilityForDates, getPhotosForDates } from "@/lib/actions";
+import { getAllResults, getCrewList, getPastAvailabilityForDates, getPhotosForDates, getOverridesForDates } from "@/lib/actions";
 import { getPastRaceDates } from "@/lib/dates";
 import { Nav } from "@/components/nav";
 import { ResultsView } from "./results-view";
 import { Anchor } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import type { RaceResult, RacePhoto } from "@/lib/schema";
+import type { RaceResult, RacePhoto, RaceOverride } from "@/lib/schema";
 
 export default async function ResultsPage() {
   const cookieStore = await cookies();
@@ -19,27 +18,32 @@ export default async function ResultsPage() {
   let results: RaceResult[] = [];
   let pastAvailability: { sailorName: string; raceDate: string; status: string; role: string | null }[] = [];
   let photos: RacePhoto[] = [];
+  let overrides: RaceOverride[] = [];
   try {
-    [results, pastAvailability, photos] = await Promise.all([
+    [results, pastAvailability, photos, overrides] = await Promise.all([
       getAllResults(),
       getPastAvailabilityForDates(pastDates),
       getPhotosForDates(pastDates),
+      getOverridesForDates(pastDates),
     ]);
   } catch {
     // DB not set up
   }
 
-  const availByDate = new Map<string, Record<string, string>>();
+  const availByDate: Record<string, Record<string, string>> = {};
   for (const row of pastAvailability) {
-    if (!availByDate.has(row.raceDate)) availByDate.set(row.raceDate, {});
-    availByDate.get(row.raceDate)![row.sailorName] = row.status;
+    if (!availByDate[row.raceDate]) availByDate[row.raceDate] = {};
+    availByDate[row.raceDate][row.sailorName] = row.status;
   }
 
-  const photosByDate = new Map<string, RacePhoto[]>();
+  const photosByDate: Record<string, RacePhoto[]> = {};
   for (const photo of photos) {
-    if (!photosByDate.has(photo.raceDate)) photosByDate.set(photo.raceDate, []);
-    photosByDate.get(photo.raceDate)!.push(photo);
+    if (!photosByDate[photo.raceDate]) photosByDate[photo.raceDate] = [];
+    photosByDate[photo.raceDate].push(photo);
   }
+
+  const overridesByDate: Record<string, RaceOverride> = {};
+  for (const o of overrides) overridesByDate[o.raceDate] = o;
 
   return (
     <div className="flex flex-1 flex-col">
@@ -58,10 +62,9 @@ export default async function ResultsPage() {
           results={results}
           crew={crew}
           sailor={sailor}
-          availByDate={Object.fromEntries(availByDate)}
-          photosByDate={Object.fromEntries(
-            [...photosByDate.entries()].map(([k, v]) => [k, v])
-          )}
+          availByDate={availByDate}
+          photosByDate={photosByDate}
+          overridesByDate={overridesByDate}
         />
       </main>
 

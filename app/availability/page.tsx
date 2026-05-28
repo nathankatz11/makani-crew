@@ -1,17 +1,12 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getUpcomingWednesdays } from "@/lib/dates";
-import {
-  getAvailabilityForDates,
-  getCrewList,
-  getUpcomingEvents,
-  getRsvpsForEvents,
-} from "@/lib/actions";
+import { getAvailabilityForDates, getCrewList } from "@/lib/actions";
 import { Nav } from "@/components/nav";
 import { StatusTimeline } from "./status-timeline";
 import { CaptainManager } from "@/components/captain-manager";
 import { Anchor } from "lucide-react";
-import type { AvailabilityStatus, Event, EventRsvp } from "@/lib/schema";
+import type { AvailabilityStatus } from "@/lib/schema";
 
 const CAPTAINS = ["Steve"];
 
@@ -26,34 +21,18 @@ export default async function AvailabilityPage() {
   let myStatuses: Record<string, AvailabilityStatus> = {};
   let myRoles: Record<string, string | null> = {};
   let allStatuses: Record<string, Record<string, AvailabilityStatus>> = {};
-  let eventsData: Event[] = [];
-  let rsvpsData: EventRsvp[] = [];
   try {
-    const [all, events] = await Promise.all([
-      getAvailabilityForDates(dates),
-      getUpcomingEvents(),
-    ]);
-    eventsData = events;
-    if (eventsData.length > 0) {
-      rsvpsData = await getRsvpsForEvents(eventsData.map((e) => e.id));
-    }
+    const all = await getAvailabilityForDates(dates);
     for (const row of all) {
       if (row.sailorName === sailor) {
         myStatuses[row.raceDate] = row.status as AvailabilityStatus;
         myRoles[row.raceDate] = row.role;
       }
       if (!allStatuses[row.raceDate]) allStatuses[row.raceDate] = {};
-      allStatuses[row.raceDate][row.sailorName] =
-        row.status as AvailabilityStatus;
+      allStatuses[row.raceDate][row.sailorName] = row.status as AvailabilityStatus;
     }
   } catch {
     // DB not set up
-  }
-
-  const rsvpsByEvent: Record<number, EventRsvp[]> = {};
-  for (const rsvp of rsvpsData) {
-    if (!rsvpsByEvent[rsvp.eventId]) rsvpsByEvent[rsvp.eventId] = [];
-    rsvpsByEvent[rsvp.eventId].push(rsvp);
   }
 
   const isCaptain = CAPTAINS.includes(sailor);
@@ -73,19 +52,13 @@ export default async function AvailabilityPage() {
       <main className="flex-1 overflow-y-auto p-4 pb-20">
         <div className="max-w-6xl mx-auto">
           {isCaptain ? (
-            <CaptainManager
-              dates={dates}
-              crew={crew}
-              allStatuses={allStatuses}
-            />
+            <CaptainManager dates={dates} crew={crew} allStatuses={allStatuses} />
           ) : (
             <StatusTimeline
               sailor={sailor}
               raceDates={dates}
               initialStatuses={myStatuses}
               initialRoles={myRoles}
-              events={eventsData}
-              rsvpsByEvent={rsvpsByEvent}
             />
           )}
         </div>

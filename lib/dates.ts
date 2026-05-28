@@ -78,8 +78,16 @@ export function getUpcomingFullSchedule(): SeasonDate[] {
 
 export function getPastRaceDates(): string[] {
   const raceDates = getRaceDatesOnly();
-  const today = formatDate(new Date());
-  return raceDates.filter((d) => d < today);
+  const now = new Date();
+  const today = formatDate(now);
+  // Include today once the race has started (6pm+)
+  const cutoff = now.getDay() === 3 && now.getHours() >= 18 ? today : formatDate(new Date(now.getTime() - 86400000));
+  return raceDates.filter((d) => d <= cutoff);
+}
+
+export function getMostRecentRaceDate(): string | null {
+  const past = getPastRaceDates();
+  return past.length > 0 ? past[past.length - 1] : null;
 }
 
 export function formatDate(d: Date | string): string {
