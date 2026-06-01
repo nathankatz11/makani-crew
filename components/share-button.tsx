@@ -24,7 +24,7 @@ export function ShareButton({
     const isCancelled =
       override?.status === "cancelled" || override?.status === "no_race";
 
-    let text = `⛵ Makani u'i — ${formatDateLong(date)}\n`;
+    let text = `🏐 Spike Squad — ${formatDateLong(date)}\n`;
 
     if (isCancelled) {
       text += `❌ ${override?.status === "cancelled" ? "Cancelled" : "No Race"}`;
@@ -49,7 +49,7 @@ export function ShareButton({
         ? `✅ GO — ${inNames.length} confirmed\n`
         : `⚠️ Need ${MIN_CREW - inNames.length} more (${inNames.length}/${MIN_CREW})\n`;
 
-      if (inNames.length > 0) text += `\nSailing: ${inNames.join(", ")}`;
+      if (inNames.length > 0) text += `\nPlaying: ${inNames.join(", ")}`;
       if (maybeNames.length > 0) text += `\nMaybe: ${maybeNames.join(", ")}`;
       if (outNames.length > 0) text += `\nOut: ${outNames.join(", ")}`;
       if (unknown.length > 0) text += `\nNo response: ${unknown.join(", ")}`;

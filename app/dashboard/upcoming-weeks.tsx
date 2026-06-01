@@ -97,7 +97,7 @@ export function UpcomingWeeks({
               <div className="flex items-center gap-2 shrink-0">
                 {!isCancelled && !isBreak && (
                   <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <span>{inCount} sailor{inCount !== 1 ? "s" : ""}</span>
+                    <span>{inCount} player{inCount !== 1 ? "s" : ""}</span>
                     <span className="opacity-40">|</span>
                     <span className={
                       myStatus === "in" ? "text-emerald-500 font-medium" :

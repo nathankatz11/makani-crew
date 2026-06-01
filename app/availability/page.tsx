@@ -1,11 +1,11 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { getUpcomingWednesdays } from "@/lib/dates";
+import { getUpcomingSundays } from "@/lib/dates";
 import { getAvailabilityForDates, getCrewList } from "@/lib/actions";
 import { Nav } from "@/components/nav";
 import { StatusTimeline } from "./status-timeline";
 import { CaptainManager } from "@/components/captain-manager";
-import { Anchor } from "lucide-react";
+import { CircleDot } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import type { AvailabilityStatus } from "@/lib/schema";
 
@@ -17,7 +17,7 @@ export default async function AvailabilityPage() {
   if (!sailor) redirect("/");
 
   const crew = await getCrewList();
-  const dates = getUpcomingWednesdays();
+  const dates = getUpcomingSundays();
 
   let myStatuses: Record<string, AvailabilityStatus> = {};
   let myRoles: Record<string, string | null> = {};
@@ -43,13 +43,13 @@ export default async function AvailabilityPage() {
       <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Anchor className="h-5 w-5 text-muted-foreground" />
-            <h1 className="text-lg font-semibold">Captain View</h1>
+            <CircleDot className="h-5 w-5 text-muted-foreground" />
+            <h1 className="text-lg font-semibold">Admin View</h1>
           </div>
           <ThemeToggle />
         </div>
         <p className="text-xs text-muted-foreground mt-0.5">
-          Set crew status &amp; roles for each race
+          Set player status &amp; positions for each game
         </p>
       </header>
 

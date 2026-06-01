@@ -5,21 +5,21 @@ import { RaceOverrideBanner, RaceOverrideControl } from "./race-override";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Sailboat, Clock, Wind, Sunset } from "lucide-react";
+import { CircleDot, Clock, Wind, Sunset } from "lucide-react";
 import type { AvailabilityStatus, RaceNote, RaceOverride } from "@/lib/schema";
 import { HeroStatusButtons } from "./hero-status-buttons";
 
 function getCountdown(dateStr: string): string {
-  const race = new Date(dateStr + "T18:00:00");
+  const game = new Date(dateStr + "T10:00:00");
   const now = new Date();
-  const diff = race.getTime() - now.getTime();
+  const diff = game.getTime() - now.getTime();
   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
   const hours = Math.floor(
     (diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
   );
 
-  if (diff < 0) return "Race started";
-  if (days === 0 && hours <= 3) return "Race tonight!";
+  if (diff < 0) return "Game started";
+  if (days === 0 && hours <= 3) return "Game day!";
   if (days === 0) return `Today — ${hours}h to go`;
   if (days === 1) return "Tomorrow!";
   return `${days} days away`;
@@ -60,20 +60,20 @@ export function HeroCard({
   const isCancelled =
     override?.status === "cancelled" || override?.status === "no_race";
 
-  const inSailors = [...statuses.entries()].filter(
+  const inPlayers = [...statuses.entries()].filter(
     ([, v]) => v.status === "in"
   );
-  const maybeSailors = [...statuses.entries()].filter(
+  const maybePlayers = [...statuses.entries()].filter(
     ([, v]) => v.status === "maybe"
   );
-  const outSailors = [...statuses.entries()].filter(
+  const outPlayers = [...statuses.entries()].filter(
     ([, v]) => v.status === "out"
   );
-  const unknownSailors = crew.filter(
+  const unknownPlayers = crew.filter(
     (name) => !statuses.has(name) || statuses.get(name)!.status === "unknown"
   );
 
-  const inCount = inSailors.length;
+  const inCount = inPlayers.length;
   const hasEnough = inCount >= MIN_CREW;
   const countdown = getCountdown(date);
 
@@ -86,7 +86,7 @@ export function HeroCard({
           <div>
             <div className="flex items-center gap-2">
               <p className="text-xs font-medium text-primary uppercase tracking-wider">
-                Next Race
+                Next Game
               </p>
               {raceNumber && totalRaces && (
                 <span className="text-xs text-muted-foreground">
@@ -107,7 +107,7 @@ export function HeroCard({
                 const myStatus = statuses.get(sailor)?.status ?? "unknown";
                 return (
                   <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <span>{inCount} sailor{inCount !== 1 ? "s" : ""}</span>
+                    <span>{inCount} player{inCount !== 1 ? "s" : ""}</span>
                     <span className="opacity-40">|</span>
                     <span className={
                       myStatus === "in" ? "text-emerald-500 font-medium" :
@@ -136,10 +136,10 @@ export function HeroCard({
               {countdown}
             </span>
             <span className="flex items-center gap-1">
-              <Sailboat className="h-3.5 w-3.5" />
+              <CircleDot className="h-3.5 w-3.5" />
               {inCount} confirmed
-              {maybeSailors.length > 0
-                ? ` + ${maybeSailors.length} maybe`
+              {maybePlayers.length > 0
+                ? ` + ${maybePlayers.length} maybe`
                 : ""}
             </span>
           </div>
@@ -150,7 +150,7 @@ export function HeroCard({
             <span>{weather.desc} &middot; {weather.temp}°F</span>
             <span className="flex items-center gap-1">
               <Wind className="h-3.5 w-3.5" />
-              {weather.wind} kts {weather.windDir}
+              {weather.wind} mph {weather.windDir}
               {weather.gusts > weather.wind
                 ? `, gusts ${weather.gusts}`
                 : ""}
@@ -164,7 +164,6 @@ export function HeroCard({
           </div>
         )}
 
-        {/* Season progress bar */}
         {raceNumber && totalRaces && (
           <div className="mt-2">
             <div className="h-1.5 rounded-full bg-muted overflow-hidden">
@@ -191,13 +190,13 @@ export function HeroCard({
               />
             </div>
 
-            {inSailors.length > 0 && (
+            {inPlayers.length > 0 && (
               <div>
                 <p className="text-xs font-medium text-emerald-600 dark:text-emerald-400 mb-1">
-                  Sailing ({inSailors.length})
+                  Playing ({inPlayers.length})
                 </p>
                 <div className="flex flex-wrap gap-1.5">
-                  {inSailors.map(([name, v]) => (
+                  {inPlayers.map(([name, v]) => (
                     <Badge
                       key={name}
                       variant="outline"
@@ -210,13 +209,13 @@ export function HeroCard({
                 </div>
               </div>
             )}
-            {maybeSailors.length > 0 && (
+            {maybePlayers.length > 0 && (
               <div>
                 <p className="text-xs font-medium text-amber-600 dark:text-amber-400 mb-1">
-                  Maybe ({maybeSailors.length})
+                  Maybe ({maybePlayers.length})
                 </p>
                 <div className="flex flex-wrap gap-1.5">
-                  {maybeSailors.map(([name]) => (
+                  {maybePlayers.map(([name]) => (
                     <Badge
                       key={name}
                       variant="outline"
@@ -228,13 +227,13 @@ export function HeroCard({
                 </div>
               </div>
             )}
-            {outSailors.length > 0 && (
+            {outPlayers.length > 0 && (
               <div>
                 <p className="text-xs font-medium text-red-500 dark:text-red-400 mb-1">
-                  Out ({outSailors.length})
+                  Out ({outPlayers.length})
                 </p>
                 <div className="flex flex-wrap gap-1.5">
-                  {outSailors.map(([name]) => (
+                  {outPlayers.map(([name]) => (
                     <Badge
                       key={name}
                       variant="outline"
@@ -246,13 +245,13 @@ export function HeroCard({
                 </div>
               </div>
             )}
-            {unknownSailors.length > 0 && (
+            {unknownPlayers.length > 0 && (
               <div>
                 <p className="text-xs font-medium text-muted-foreground mb-1">
-                  No response ({unknownSailors.length})
+                  No response ({unknownPlayers.length})
                 </p>
                 <div className="flex flex-wrap gap-1.5">
-                  {unknownSailors.map((name) => (
+                  {unknownPlayers.map((name) => (
                     <Badge key={name} variant="outline" className="opacity-50">
                       {name}
                     </Badge>

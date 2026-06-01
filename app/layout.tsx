@@ -13,18 +13,18 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Makani u\u2019i Crew",
-  description: "Wednesday night sailing \u2014 DuSable Harbor, Chicago",
+  title: "Spike Squad",
+  description: "Sunday volleyball — Chicago",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Makani u\u2019i",
+    title: "Spike Squad",
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#1d4ed8",
+  themeColor: "#16a34a",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,

@@ -11,4 +11,4 @@ export const DEFAULT_CREW = [
   "Sophie",
 ];
 
-export const MIN_CREW = 4;
+export const MIN_CREW = 6;

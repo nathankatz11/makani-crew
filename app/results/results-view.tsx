@@ -42,7 +42,7 @@ function PlaceEditor({ raceDate, result }: { raceDate: string; result: RaceResul
     <form action={handleSave} className="space-y-2">
       <input name="place" type="number" min="1" defaultValue={result?.place ?? ""} placeholder="Finishing place (e.g. 3)"
         className="w-full rounded-md border bg-transparent px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-ring" />
-      <input name="resultsUrl" type="url" defaultValue={result?.resultsUrl ?? ""} placeholder="Clubspot results URL (optional)"
+      <input name="resultsUrl" type="url" defaultValue={result?.resultsUrl ?? ""} placeholder="Results URL (optional)"
         className="w-full rounded-md border bg-transparent px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-ring" />
       <div className="flex gap-2">
         <Button size="sm" type="submit" disabled={isPending}>Save</Button>
@@ -98,7 +98,7 @@ export function ResultsView({
               <span className="text-sm font-medium">Season Summary</span>
             </div>
             <div className="grid grid-cols-3 gap-4 text-center">
-              <div><p className="text-2xl font-bold">{withPlace.length}</p><p className="text-xs text-muted-foreground">Races</p></div>
+              <div><p className="text-2xl font-bold">{withPlace.length}</p><p className="text-xs text-muted-foreground">Games</p></div>
               <div><p className="text-2xl font-bold">{avgPlace}</p><p className="text-xs text-muted-foreground">Avg Place</p></div>
               <div><p className="text-2xl font-bold">{withPlace.filter((r) => r.place === 1).length}</p><p className="text-xs text-muted-foreground">Wins</p></div>
             </div>
@@ -128,7 +128,7 @@ export function ResultsView({
         <Card>
           <CardContent className="py-6 text-center text-sm text-muted-foreground">
             <p className="font-medium mb-1">No history yet</p>
-            <p>Results and attendance will appear here after race nights.</p>
+            <p>Results and attendance will appear here after game days.</p>
           </CardContent>
         </Card>
       )}

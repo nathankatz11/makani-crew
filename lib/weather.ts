@@ -1,11 +1,11 @@
 // Open-Meteo API — free, no API key needed
-// DuSable Harbor, Chicago: 41.8867° N, 87.6108° W
+// Chicago: 41.8827° N, 87.6233° W
 
 export interface WeatherForecast {
-  temp: number; // °F
-  wind: number; // knots
+  temp: number;   // °F
+  wind: number;   // mph
   windDir: string; // cardinal direction
-  gusts: number; // knots
+  gusts: number;  // mph
   desc: string;
   sunset: string; // "7:42 PM"
 }
@@ -20,14 +20,14 @@ function degreesToCardinal(deg: number): string {
   return WIND_DIRS[idx];
 }
 
-export async function getWednesdayWeather(
+export async function getSundayWeather(
   dateStr: string
 ): Promise<WeatherForecast | null> {
   try {
     const res = await fetch(
-      `https://api.open-meteo.com/v1/forecast?latitude=41.8867&longitude=-87.6108` +
+      `https://api.open-meteo.com/v1/forecast?latitude=41.8827&longitude=-87.6233` +
         `&daily=temperature_2m_max,wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant,weather_code,sunset` +
-        `&temperature_unit=fahrenheit&wind_speed_unit=kn&timezone=America/Chicago` +
+        `&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America/Chicago` +
         `&start_date=${dateStr}&end_date=${dateStr}`,
       { next: { revalidate: 3600 } }
     );
@@ -41,9 +41,7 @@ export async function getWednesdayWeather(
     const windDir = degreesToCardinal(d.wind_direction_10m_dominant[0]);
     const code = d.weather_code[0];
 
-    // Open-Meteo returns sunset already in the requested timezone (America/Chicago),
-    // so parse the time directly from the string to avoid UTC double-conversion.
-    const sunsetRaw = d.sunset[0] as string; // e.g. "2026-06-10T20:23"
+    const sunsetRaw = d.sunset[0] as string; // e.g. "2026-06-07T20:23"
     const timePart = sunsetRaw.split("T")[1] ?? "00:00";
     const [hourStr, minStr] = timePart.split(":");
     const hour = parseInt(hourStr, 10);

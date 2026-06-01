@@ -33,34 +33,34 @@ export const raceResults = pgTable("race_results", {
   place: integer("place"),
   fleetSize: integer("fleet_size"),
   notes: text("notes"),
-  crew: text("crew"), // JSON array of sailor names who sailed
+  crew: text("crew"), // JSON array of player names who played
   resultsUrl: text("results_url"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Race-level overrides: cancelled, vacation, special status
+// Game-level overrides: cancelled, rained out, special status
 export const raceOverrides = pgTable("race_overrides", {
   id: serial("id").primaryKey(),
   raceDate: date("race_date").notNull().unique(),
   status: text("status").notNull(), // "cancelled", "no_race", "custom"
-  reason: text("reason"), // "Weather", "July 4th", "Steve (captain) unavailable", etc.
+  reason: text("reason"),
   updatedBy: text("updated_by"),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Custom events (non-race): prep, race, practice, social
+// Custom events (non-game): practice, social, etc.
 export const events = pgTable("events", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
   eventDate: date("event_date").notNull(),
-  eventTime: text("event_time"), // "10:00 AM"
-  eventType: text("event_type").notNull(), // "prep", "race", "practice", "social", "other"
+  eventTime: text("event_time"),
+  eventType: text("event_type").notNull(),
   description: text("description"),
   createdBy: text("created_by").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Photos for completed races
+// Photos for completed games
 export const racePhotos = pgTable("race_photos", {
   id: serial("id").primaryKey(),
   raceDate: date("race_date").notNull(),
@@ -70,7 +70,7 @@ export const racePhotos = pgTable("race_photos", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// RSVP for custom events (reuses same in/out/maybe pattern)
+// RSVP for custom events
 export const eventRsvps = pgTable(
   "event_rsvps",
   {
@@ -94,24 +94,24 @@ export type RacePhoto = typeof racePhotos.$inferSelect;
 
 export const RACE_STATUSES = [
   { value: "cancelled", label: "Cancelled", color: "red" },
-  { value: "no_race", label: "No Race", color: "muted" },
+  { value: "no_race", label: "No Game", color: "muted" },
   { value: "custom", label: "Custom Note", color: "amber" },
 ] as const;
 export type RaceStatus = (typeof RACE_STATUSES)[number]["value"];
 
 export const ROLES = [
-  "Skipper",
-  "Main",
-  "Jib",
-  "Spinnaker",
-  "Bow",
-  "Passenger",
+  "Setter",
+  "Outside Hitter",
+  "Middle Blocker",
+  "Libero",
+  "Opposite Hitter",
+  "Any",
 ] as const;
 export type Role = (typeof ROLES)[number];
 
 export const EVENT_TYPES = [
   { value: "prep", label: "Prep", emoji: "🔧" },
-  { value: "race", label: "Race", emoji: "⛵" },
+  { value: "race", label: "Game", emoji: "🏐" },
   { value: "practice", label: "Practice", emoji: "🏁" },
   { value: "social", label: "Social", emoji: "🍻" },
   { value: "other", label: "Other", emoji: "📌" },

@@ -1,35 +1,20 @@
-// Chicago Beer Can Series 2026 — exact schedule
-// Based on chicagobeercan.org schedule pattern, mapped to 2026 Wednesdays
-// Reference: https://www.chicagobeercan.org
+// Sunday Volleyball 2026 — 8 Sundays, June 7 through July 26
 
 export interface SeasonDate {
   date: string;
   label: string;
-  isRace: boolean; // false for breaks, parties, ceremonies
+  isRace: boolean; // false for breaks or special events
 }
 
-// The full 2026 season schedule
 const SEASON_SCHEDULE: SeasonDate[] = [
-  { date: "2026-05-06", label: "Beer Can Starting Gun Party", isRace: false },
-  { date: "2026-05-13", label: "Tune-Up Race", isRace: true },
-  { date: "2026-05-20", label: "Race Week 1", isRace: true },
-  { date: "2026-05-27", label: "Race Week 2", isRace: true },
-  { date: "2026-06-03", label: "Race Week 3", isRace: true },
-  { date: "2026-06-10", label: "Race Week 4", isRace: true },
-  { date: "2026-06-17", label: "Race Week 5", isRace: true },
-  { date: "2026-06-24", label: "Race Week 6", isRace: true },
-  { date: "2026-07-01", label: "Race Week 7", isRace: true },
-  { date: "2026-07-08", label: "Break — Mac Race", isRace: false },
-  { date: "2026-07-15", label: "Break — Mac Race", isRace: false },
-  { date: "2026-07-22", label: "Race Week 8", isRace: true },
-  { date: "2026-07-29", label: "Race Week 9", isRace: true },
-  { date: "2026-08-05", label: "100 Boats on a Beer Can", isRace: true },
-  { date: "2026-08-12", label: "Race Week 10", isRace: true },
-  { date: "2026-08-19", label: "Race Week 11", isRace: true },
-  { date: "2026-08-26", label: "Race Week 12", isRace: true },
-  { date: "2026-09-02", label: "Race Week 13", isRace: true },
-  { date: "2026-09-09", label: "Race Week 14", isRace: true },
-  { date: "2026-10-07", label: "Beer Can Bash Awards Ceremony", isRace: false },
+  { date: "2026-06-07", label: "Game 1", isRace: true },
+  { date: "2026-06-14", label: "Game 2", isRace: true },
+  { date: "2026-06-21", label: "Game 3", isRace: true },
+  { date: "2026-06-28", label: "Game 4", isRace: true },
+  { date: "2026-07-05", label: "Game 5", isRace: true },
+  { date: "2026-07-12", label: "Game 6", isRace: true },
+  { date: "2026-07-19", label: "Game 7", isRace: true },
+  { date: "2026-07-26", label: "Game 8", isRace: true },
 ];
 
 export function getFullSchedule(): SeasonDate[] {
@@ -67,35 +52,34 @@ function getChicagoNow(): { day: number; hour: number; today: string } {
   return { day, hour, today };
 }
 
-export function getUpcomingWednesdays(count?: number): string[] {
-  const raceDates = getRaceDatesOnly();
+export function getUpcomingSundays(count?: number): string[] {
+  const gameDates = getRaceDatesOnly();
   const { day, hour, today } = getChicagoNow();
-  const isWednesday = day === 3;
-  const cutoff = isWednesday && hour < 18
+  const isSunday = day === 0;
+  const cutoff = isSunday && hour < 10
     ? today
     : formatDate(new Date(new Date().getTime() + 86400000));
-  const upcoming = raceDates.filter((d) => d >= cutoff);
+  const upcoming = gameDates.filter((d) => d >= cutoff);
   return count ? upcoming.slice(0, count) : upcoming;
 }
 
 export function getUpcomingFullSchedule(): SeasonDate[] {
   const { day, hour, today } = getChicagoNow();
-  const isWednesday = day === 3;
-  const cutoff = isWednesday && hour < 18
+  const isSunday = day === 0;
+  const cutoff = isSunday && hour < 10
     ? today
     : formatDate(new Date(new Date().getTime() + 86400000));
   return SEASON_SCHEDULE.filter((d) => d.date >= cutoff);
 }
 
 export function getPastRaceDates(): string[] {
-  const raceDates = getRaceDatesOnly();
+  const gameDates = getRaceDatesOnly();
   const { day, hour, today } = getChicagoNow();
-  const isWednesday = day === 3;
-  // Include today once the race has started (6pm CST/CDT)
-  const cutoff = isWednesday && hour >= 18
+  const isSunday = day === 0;
+  const cutoff = isSunday && hour >= 10
     ? today
     : formatDate(new Date(new Date().getTime() - 86400000));
-  return raceDates.filter((d) => d <= cutoff);
+  return gameDates.filter((d) => d <= cutoff);
 }
 
 export function getMostRecentRaceDate(): string | null {

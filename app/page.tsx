@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { ProfilePicker } from "./profile-picker";
 import { getCrewList } from "@/lib/actions";
-import { Anchor } from "lucide-react";
+import { CircleDot } from "lucide-react";
 
 export default async function Home() {
   const cookieStore = await cookies();
@@ -24,12 +24,10 @@ export default async function Home() {
     <div className="flex flex-1 flex-col items-center justify-center p-6">
       <div className="w-full max-w-sm space-y-8">
         <div className="text-center space-y-2">
-          <Anchor className="h-10 w-10 mx-auto text-muted-foreground" />
-          <h1 className="text-2xl font-bold tracking-tight">
-            Makani u&#x2019;i
-          </h1>
+          <CircleDot className="h-10 w-10 mx-auto text-muted-foreground" />
+          <h1 className="text-2xl font-bold tracking-tight">Spike Squad</h1>
           <p className="text-sm text-muted-foreground">
-            Wednesday night racing &middot; DuSable Harbor
+            Sunday volleyball &middot; Chicago
           </p>
         </div>
         <ProfilePicker crew={crew} />

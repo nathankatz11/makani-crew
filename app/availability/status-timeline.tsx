@@ -66,7 +66,7 @@ export function StatusTimeline({
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
       <Card className="col-span-full">
         <CardContent className="px-4 py-3">
-          <p className="text-sm font-medium mb-2">Quick set all unanswered races</p>
+          <p className="text-sm font-medium mb-2">Quick set all unanswered games</p>
           <div className="flex gap-2">
             {raceOptions.map((opt) => (
               <Button key={opt.value} variant="outline" size="sm" disabled={isPending} className="text-muted-foreground" onClick={() => handleBulk(opt.value)}>
