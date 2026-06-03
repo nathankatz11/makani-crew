@@ -67,13 +67,18 @@ function getChicagoNow(): { day: number; hour: number; today: string } {
   return { day, hour, today };
 }
 
+// Safe date arithmetic on YYYY-MM-DD strings — avoids UTC-offset bugs from toISOString()
+function shiftDate(dateStr: string, days: number): string {
+  const d = new Date(dateStr + "T12:00:00"); // noon keeps us clear of DST edges
+  d.setDate(d.getDate() + days);
+  return d.toISOString().split("T")[0];
+}
+
 export function getUpcomingWednesdays(count?: number): string[] {
   const raceDates = getRaceDatesOnly();
   const { day, hour, today } = getChicagoNow();
   const isWednesday = day === 3;
-  const cutoff = isWednesday && hour < 18
-    ? today
-    : formatDate(new Date(new Date().getTime() + 86400000));
+  const cutoff = isWednesday && hour < 18 ? today : shiftDate(today, 1);
   const upcoming = raceDates.filter((d) => d >= cutoff);
   return count ? upcoming.slice(0, count) : upcoming;
 }
@@ -81,9 +86,7 @@ export function getUpcomingWednesdays(count?: number): string[] {
 export function getUpcomingFullSchedule(): SeasonDate[] {
   const { day, hour, today } = getChicagoNow();
   const isWednesday = day === 3;
-  const cutoff = isWednesday && hour < 18
-    ? today
-    : formatDate(new Date(new Date().getTime() + 86400000));
+  const cutoff = isWednesday && hour < 18 ? today : shiftDate(today, 1);
   return SEASON_SCHEDULE.filter((d) => d.date >= cutoff);
 }
 
@@ -92,9 +95,7 @@ export function getPastRaceDates(): string[] {
   const { day, hour, today } = getChicagoNow();
   const isWednesday = day === 3;
   // Include today once the race has started (6pm CST/CDT)
-  const cutoff = isWednesday && hour >= 18
-    ? today
-    : formatDate(new Date(new Date().getTime() - 86400000));
+  const cutoff = isWednesday && hour >= 18 ? today : shiftDate(today, -1);
   return raceDates.filter((d) => d <= cutoff);
 }
 
