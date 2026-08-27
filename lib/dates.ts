@@ -29,6 +29,8 @@ const SEASON_SCHEDULE: SeasonDate[] = [
   { date: "2026-08-26", label: "Race Week 12", isRace: true },
   { date: "2026-09-02", label: "Race Week 13", isRace: true },
   { date: "2026-09-09", label: "Race Week 14", isRace: true },
+  { date: "2026-09-16", label: "Race Week 15", isRace: true },
+  { date: "2026-09-23", label: "Race Week 16", isRace: true },
   { date: "2026-10-07", label: "Beer Can Bash Awards Ceremony", isRace: false },
 ];
 
